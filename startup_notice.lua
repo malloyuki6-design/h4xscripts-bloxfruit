@@ -1,3 +1,5 @@
+-- test
+
 LPH_INTRO(function()
     _G.ExecuteTime = tick()
     if _G.ExecuteCooldown then
