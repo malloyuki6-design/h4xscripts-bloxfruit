@@ -1,6 +1,4 @@
--- Data-only catalog module. This file intentionally contains no automation logic.
 
--- Loaded by the protected main script; keep this module to trusted static data only.
 
 return {
 
