@@ -1,4 +1,4 @@
--- UI theme registration only. Keep this module free of gameplay or executor actions.
+
 
 return function(H4xUI)
     local function AddAnimeTheme(name, colors)
