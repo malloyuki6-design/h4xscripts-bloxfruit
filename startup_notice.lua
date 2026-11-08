@@ -1,5 +1,3 @@
--- Cosmetic startup notice only. No gameplay logic is stored here.
-
 LPH_INTRO(function()
     _G.ExecuteTime = tick()
     if _G.ExecuteCooldown then
