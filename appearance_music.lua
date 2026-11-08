@@ -1,5 +1,4 @@
--- Optional appearance/music UI module. This is intentionally separate from gameplay logic.
--- The main script injects only the UI/service references this module needs.
+
 return function(context)
     assert(type(context) == "table", "Appearance module requires a context table")
     local Window = assert(context.Window, "Missing Window")
