@@ -1,19 +1,100 @@
+
 -- test
 
 LPH_INTRO(function()
     _G.ExecuteTime = tick()
+
     if _G.ExecuteCooldown then
-        pcall(
-            function() game:GetService("StarterGui"):SetCore("SendNotification", { Title = "h4xscripts", Text = "This script is already loading, please wait.", Duration = 5, }) end
-        )
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "h4xscripts",
+                Text = "This script is already loading, please wait.",
+                Duration = 5,
+            })
+        end)
         return
     end
+
     _G.ExecuteCooldown = true
 
     local TweenService = game:GetService("TweenService")
-    local SoundService = game:GetService("SoundService")
     local CoreGui = game:GetService("CoreGui")
     local UserInputService = game:GetService("UserInputService")
+
+    local EXECUTOR_TIERS = {
+        Low = {
+            "Xeno",
+            "Codex",
+            "Solara",
+        },
+
+        High = {
+            "Wave",
+            "Pottasium",
+            "Real",
+            "Madium",
+            "Delta",
+        },
+    }
+
+    local function NormalizeName(name)
+        return tostring(name):lower():gsub("[^%w]", "")
+    end
+
+    local function DetectExecutor()
+        local executorName
+
+        if type(identifyexecutor) == "function" then
+            local success, result = pcall(identifyexecutor)
+
+            if success and result and tostring(result) ~= "" then
+                executorName = tostring(result)
+            end
+        end
+
+        if not executorName and type(getexecutorname) == "function" then
+            local success, result = pcall(getexecutorname)
+
+            if success and result and tostring(result) ~= "" then
+                executorName = tostring(result)
+            end
+        end
+
+        if not executorName then
+            return "Unknown Executor", "Unknown"
+        end
+
+        local normalizedName = NormalizeName(executorName)
+
+        for _, name in ipairs(EXECUTOR_TIERS.Low) do
+            if normalizedName:find(NormalizeName(name), 1, true) then
+                return executorName, "Low-End"
+            end
+        end
+
+        for _, name in ipairs(EXECUTOR_TIERS.High) do
+            if normalizedName:find(NormalizeName(name), 1, true) then
+                return executorName, "High-End"
+            end
+        end
+
+        return executorName, "Unknown"
+    end
+
+    local executorName, executorTier = DetectExecutor()
+
+    local executorMessage
+
+    if executorTier == "Low-End" then
+        executorMessage =
+            "Low-end executor detected. Some features may be limited."
+    elseif executorTier == "High-End" then
+        executorMessage =
+            "High-end executor detected. Script is loading normally."
+    else
+        executorMessage =
+            "Executor tier could not be determined."
+    end
 
     local sound = Instance.new("Sound")
     sound.SoundId = "rbxassetid://4590657391"
@@ -21,7 +102,9 @@ LPH_INTRO(function()
     sound.Parent = workspace
     sound:Play()
 
-    task.delay(10, function() sound:Destroy() end)
+    task.delay(10, function()
+        sound:Destroy()
+    end)
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "FluentNotificationGui"
@@ -29,16 +112,33 @@ LPH_INTRO(function()
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
     local targetParent = CoreGui
-    pcall(function() if gethui then targetParent = gethui() end end)
+
+    pcall(function()
+        if gethui then
+            targetParent = gethui()
+        end
+    end)
+
     ScreenGui.Parent = targetParent
 
-    local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+    local isMobile =
+        UserInputService.TouchEnabled
+        and not UserInputService.KeyboardEnabled
 
     local Frame = Instance.new("Frame")
     Frame.Name = "NotificationFrame"
-    Frame.Size = isMobile and UDim2.new(0.9, 0, 0, 95) or UDim2.new(0, 380, 0, 90)
-    Frame.Position = isMobile and UDim2.new(0.5, 0, 1, 50) or UDim2.new(1, 30, 1, -30)
-    Frame.AnchorPoint = isMobile and Vector2.new(0.5, 1) or Vector2.new(1, 1)
+    Frame.Size = UDim2.new(
+        isMobile and 0.9 or 0,
+        isMobile and 0 or 380,
+        0,
+        110
+    )
+    Frame.Position = isMobile
+        and UDim2.new(0.5, 0, 1, 50)
+        or UDim2.new(1, 30, 1, -30)
+    Frame.AnchorPoint = isMobile
+        and Vector2.new(0.5, 1)
+        or Vector2.new(1, 1)
     Frame.BackgroundColor3 = Color3.fromRGB(18, 14, 15)
     Frame.BackgroundTransparency = 0.05
     Frame.BorderSizePixel = 0
@@ -90,11 +190,16 @@ LPH_INTRO(function()
 
     local TextLabel = Instance.new("TextLabel")
     TextLabel.Name = "Text"
-    TextLabel.Size = UDim2.new(1, -38, 0, 40)
+    TextLabel.Size = UDim2.new(1, -38, 0, 65)
     TextLabel.Position = UDim2.new(0, 16, 0, 38)
     TextLabel.BackgroundTransparency = 1
     TextLabel.Font = Enum.Font.Gotham
-    TextLabel.Text = "Script is loading. The game might lag for 1-2min but after that it should be smooth"
+    TextLabel.Text = string.format(
+        "Executor: %s [%s]\n%s\nScript is loading. Initial lag may occur.",
+        executorName,
+        executorTier,
+        executorMessage
+    )
     TextLabel.TextColor3 = Color3.fromRGB(175, 170, 172)
     TextLabel.TextSize = 12
     TextLabel.TextWrapped = true
@@ -102,16 +207,41 @@ LPH_INTRO(function()
     TextLabel.TextYAlignment = Enum.TextYAlignment.Top
     TextLabel.Parent = Frame
 
-    local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-    local targetPos = isMobile and UDim2.new(0.5, 0, 1, -20) or UDim2.new(1, -20, 1, -20)
-    TweenService:Create(Frame, tweenInfo, { Position = targetPos }):Play()
+    local tweenInfo = TweenInfo.new(
+        0.4,
+        Enum.EasingStyle.Quart,
+        Enum.EasingDirection.Out
+    )
+
+    local targetPos = isMobile
+        and UDim2.new(0.5, 0, 1, -20)
+        or UDim2.new(1, -20, 1, -20)
+
+    TweenService:Create(
+        Frame,
+        tweenInfo,
+        { Position = targetPos }
+    ):Play()
 
     task.delay(10, function()
-        local hidePos = isMobile and UDim2.new(0.5, 0, 1, 50) or UDim2.new(1, 30, 1, -20)
-        local hideTween = TweenService:Create(Frame, tweenInfo, { Position = hidePos })
+        local hidePos = isMobile
+            and UDim2.new(0.5, 0, 1, 50)
+            or UDim2.new(1, 30, 1, -20)
+
+        local hideTween = TweenService:Create(
+            Frame,
+            tweenInfo,
+            { Position = hidePos }
+        )
+
         hideTween:Play()
-        hideTween.Completed:Connect(function() ScreenGui:Destroy() end)
+
+        hideTween.Completed:Connect(function()
+            ScreenGui:Destroy()
+        end)
     end)
 
-    task.delay(30, function() _G.ExecuteCooldown = nil end)
+    task.delay(30, function()
+        _G.ExecuteCooldown = nil
+    end)
 end)
